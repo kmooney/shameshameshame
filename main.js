@@ -28,7 +28,7 @@ var express = require('express'),
     twitter = twitterAPI({
       consumerKey: process.env.TWITTER_CONSUMER_KEY,
       consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
-      callback: "http://"+process.env.DOMAIN+"/okay/",
+      callback: "https://"+process.env.DOMAIN+"/okay/",
       x_auth_access_type: "write",
     }),
     _ = require('lodash'),
@@ -76,8 +76,10 @@ var express = require('express'),
           if (r.length === 0) {
             console.log("No tokens for user", userId, "wtf");
           }
+
           var accessToken = r[0].access_token,
               accessTokenSecret = r[0].access_token_secret;
+
           console.log("Trying to tweet: ", accessToken, accessTokenSecret, r);
           twitter.statuses("update",
             {
@@ -98,15 +100,48 @@ var express = require('express'),
       });
     },
     go = function() {
-      // get the access token and access token secret for the 
-      // trumppressconference.club user - let it be "productivyttips"
-      // get the GARBAGE_PERSON's twitter feed.
-      // calculate a checksum of the tweet ids (sort 'em and concatenate em)
-      // if the checksum is the same as that which is stored in RDS, do nothing.
-      // if the checksum is different, get the new tweet ids
-      // update the GARBAGE_PERSON's tweet checksum
-      // get a list of all users who have not responded to those tweets
-      // for each user, respond to the tweet
+        var handleListResponse = function(error, data, r) {
+            if (error) {
+                console.log(error);
+                return;
+            }
+            database.query("SELECT id AS user_id FROM users", [], function(error, users) {
+		    if (error) {
+			console.log(error);
+			return;
+		    }
+		    _.each(users, function(user) {
+			    data = _.filter(data, function(t) {
+				return t.user.screen_name == process.env.GARBAGE_PERSON //&& t.source.indexOf("android") !== -1;
+			    });
+
+			    _.each(data, function(t) {
+				console.log("Checking should respond for:", t.id_str);
+				shouldRespond(t.id_str, user.user_id, function(d, r) {
+				    console.log("done! from twittar:", d, r);
+				});
+			    });
+		     });
+            });
+      };
+
+      database.query(
+      	"SELECT access_token, access_token_secret FROM users WHERE screen_name = ?",
+	[process.env.OUR_USER],
+        function(err, results) {
+            if (err) {
+                console.log(err);
+                return;
+            } 
+            var accessToken = results[0].access_token,
+                accessTokenSecret = results[0].access_token_secret;
+            data = twitter.getTimeline("user",
+	        {"screen_name": process.env.GARBAGE_PERSON},
+	        accessToken,
+	        accessTokenSecret,
+	        handleListResponse
+            );
+        });
     };
 
 database.connect();
@@ -118,50 +153,6 @@ app.use(cookieSession({
   // Cookie Options 
   maxAge: 24 * 60 * 60 * 1000 // 24 hours 
 }));
-
-app.get("/test_connection", function(request, response) {
-  var dd = mysql.createConnection({
-      host:     process.env.MYSQL_HOST,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      user:     process.env.MYSQL_USER
-    });
-  r = dd.connect();
-  dd.query("SELECT * FROM users", function(e, r) {
-    if(e) console.log(e);
-    console.log('hi');
-    console.log(r);
-  });
-
-  dd.end(function(){});
-  console.log('done');
-});
-
-app.get("/go", function(request, response) {
-  var handleListResponse = function(error, data, r) {
-    //console.log(data);
-    data = _.filter(data, function(t) {
-      return t.user.screen_name == process.env.GARBAGE_PERSON// && t.source.indexOf("android") !== -1;
-    });
-    
-    _.each(data, function(t) {
-      console.log("Checking should respond for:", t.id_str);
-      shouldRespond(t.id_str, 11, function(d, r) {
-        console.log("done! from twittar:", d, r);
-      });
-    });
-
-    response.send(_.map(data, function(t) {return t;}));
-  }
-  
-  twitter.getTimeline("user",
-    {"screen_name": process.env.GARBAGE_PERSON},
-    request.session.accessToken,
-    request.sessionAccessTokenSecret,
-    handleListResponse
-  );
-  
-});
 
 app.get("/okay", function(request, response) {
   var requestToken              = null,
@@ -225,4 +216,5 @@ app.get("/", function(request, response) {
 
 setInterval(function() {
   console.log('test');
-}, 1000 * 60 * 60)
+  go();
+}, 5000)
