@@ -1,0 +1,44 @@
+
+.trump-bg {
+    background: url("../images/trumpy.png");
+   background-position: -200px 0px;
+}
+
+@media (min-width: 550px) {
+.trump-bg {
+   background-position: 0px -0px;
+}
+}
+
+body .jumbotron.trump-bg {
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 800;
+    color: #eee;
+    text-shadow: 1px 4px black;
+    text-align: left;
+}
+
+
+body .jumbotron.trump-bg h1 {
+    margin:0;
+}
+
+body .jumbotron.trump-bg p {
+    text-shadow: 1px 2px black;
+}
+
+body .jumbotron.trump-bg p.lead {
+    display: inline;
+    background: red;
+    text-align: left;
+    text-shadow: none;
+    color: white;
+    line-height: 28px;
+    font-size: 17px;
+    padding: 2px;
+    font-weight: 600;
+}
+
+body .jumbotron .btn {
+margin-top: 20px;
+}
