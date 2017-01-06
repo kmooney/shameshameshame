@@ -99,20 +99,30 @@ var express = require('express'),
         });
       });
     },
+    getUser = function(username, cb) {
+        database.query("SELECT screen_name, active FROM users WHERE screen_name = ?", [username], function(error, results) { 
+            if (error) { 
+                console.log(error);
+                return;
+            }
+            cb(results[0]);
+        });
+    }
     go = function() {
         var handleListResponse = function(error, data, r) {
             if (error) {
                 console.log(error);
                 return;
             }
-            database.query("SELECT id AS user_id FROM users", [], function(error, users) {
+            database.query("SELECT id AS user_id FROM users WHERE active IS NOT NULL", [], function(error, users) {
+                    console.log('users', users);
 		    if (error) {
 			console.log(error);
 			return;
 		    }
 		    _.each(users, function(user) {
 			    data = _.filter(data, function(t) {
-				return t.user.screen_name == process.env.GARBAGE_PERSON //&& t.source.indexOf("android") !== -1;
+				return t.user.screen_name == process.env.GARBAGE_PERSON && !t.in_reply_to_status_id // && t.source.indexOf("android") !== -1;
 			    });
 
 			    _.each(data, function(t) {
@@ -153,6 +163,35 @@ app.use(cookieSession({
   // Cookie Options 
   maxAge: 24 * 60 * 60 * 1000 // 24 hours 
 }));
+app.post("/switch", function(request, response) {
+    if (!request.session.screen_name) {
+        response.status(400).json({error: "Scram"});
+        return;
+    }
+    getUser(request.session.screen_name, function(user) {
+        database.query(
+             "UPDATE users SET active = ? WHERE screen_name = ?",
+            [!!user.active ? null : 1, user.screen_name],
+            function(err, results) {
+                if (err) { 
+                   response.status(500).json({error: "Something broke"});
+                }
+                user.active = !user.active
+                response.status(200).json(user);
+            }
+        );
+    });
+     
+});
+app.get("/status", function(request, response) {
+    if (!request.session.screen_name) {
+        response.status(200).json({error: "Scram"});
+        return;
+    }
+    getUser(request.session.screen_name, function(user) {
+        response.json(user);
+    });
+});
 
 app.get("/okay", function(request, response) {
   var requestToken              = null,
@@ -162,14 +201,14 @@ app.get("/okay", function(request, response) {
       handleAccessTokenResponse = function(error, accessToken, accessTokenSecret, results) {
         if (error) {
           console.log("Error", error);
-          //response.send(error.code, error);
+          response.send(error.code, error);
         } else {
-          console.log("Success getting access token", accessToken);
-          console.log(results);
+          console.log("Success getting access token", accessToken, results);
           request.session.accessToken = accessToken;
           request.session.accessTokenSecret = accessTokenSecret;
-          request.session.user = results.screen_name;
+          request.session.screen_name = results.screen_name;
           saveTokenResponse(accessToken, accessTokenSecret, results.screen_name);
+          response.redirect('/settings');
         }
       };
 
@@ -197,11 +236,12 @@ app.get("/okay", function(request, response) {
     );
   } else {
     console.log("Not oauth token, request query is ", request.query);
+    response.status(500).send("ERROR")
   }
-  response.sendStatus(200);
+
 });
 
-app.get("/", function(request, response) {
+app.get("/login", function(request, response) {
   twitter.getRequestToken(function(error, requestToken, requestTokenSecret, results) {
     if (error) {
       console.log("There was an error", error);
@@ -215,6 +255,6 @@ app.get("/", function(request, response) {
 });
 
 setInterval(function() {
-  console.log('test');
+  console.log('Waking...');
   go();
 }, 5000)

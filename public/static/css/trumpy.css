@@ -20,7 +20,9 @@ body .jumbotron.trump-bg {
 
 
 body .jumbotron.trump-bg h1 {
-    margin:0;
+    margin: 0;
+    font-size: 55px;
+    margin-bottom: 20px;
 }
 
 body .jumbotron.trump-bg p {
@@ -46,3 +48,19 @@ margin-top: 20px;
 .tweety {
     font-weight: 700;
 }
+
+.special-hero-shit {
+    display:none;
+}
+
+.on { 
+    color: green;
+    font-weight: 800;
+}
+
+.off { 
+    color: red;
+    font-weight: 800;
+}
+
+.settings-link { display: none; }
