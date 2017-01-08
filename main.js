@@ -3,13 +3,10 @@
 var express = require('express'),
     prefix = "@"+process.env.GARBAGE_PERSON,
     some_responses = [
-      prefix + " you should be ashamed of yourself!",
-      prefix + " TAX RETURNS PLEASE!",
-      prefix + " you are an embarrassment to the American people!",
-      prefix + " Why don't you tell us if you were involved with the DNC hack?",
-      prefix + " Why are you giving comfort to America's adversaries?",
+      prefix + " Why haven't you released your tax returns yet?  You said you would if elected!",
+      prefix + " Was anyone in your campaign involved with or aware of the DNC hack before the general public knew about it?",
       prefix + " How much money do you owe alfabank?",
-      prefix + " How much money do you owe the russians?"
+      prefix + " How much money do you owe the Russians?  Can you release your tax returns so the american people can see?"
     ],
     app = express(),
     listener = app.listen(process.env.PORT, function () {
@@ -122,7 +119,7 @@ var express = require('express'),
 		    }
 		    _.each(users, function(user) {
 			    data = _.filter(data, function(t) {
-				return t.user.screen_name == process.env.GARBAGE_PERSON && !t.in_reply_to_status_id // && t.source.indexOf("android") !== -1;
+				return t.user.screen_name == process.env.GARBAGE_PERSON && !t.in_reply_to_status_id && t.source.indexOf("android") !== -1;
 			    });
 
 			    _.each(data, function(t) {
@@ -257,4 +254,4 @@ app.get("/login", function(request, response) {
 setInterval(function() {
   console.log('Waking...');
   go();
-}, 5000)
+}, 30000)

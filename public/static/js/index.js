@@ -1,5 +1,7 @@
 $(function() {
     $.get('/status', function(status) { 
-        $(".settings-link").show();
+        if(!!status.screen_name) {
+            $(".settings-link").show();
+        }
     });
 });
