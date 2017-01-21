@@ -3,10 +3,20 @@
 var express = require('express'),
     prefix = "@"+process.env.GARBAGE_PERSON,
     some_responses = [
-      prefix + " Why haven't you released your tax returns yet?  You said you would if elected!",
-      prefix + " Was anyone in your campaign involved with or aware of the DNC hack before the general public knew about it?",
-      prefix + " How much money do you owe alfabank?",
-      prefix + " How much money do you owe the Russians?  Can you release your tax returns so the american people can see?"
+        "How much money do you owe alfabank?",
+        "How much money do you owe the Russians?  Can you release your tax returns so the american people can see?",
+        "You said you know things others don't about hacking. What did you know and when did you know it?",
+        "You now claim Russian hacking had no influence on the election. If true, why bring up stolen emails on campaign trail?",
+        "Why'd the FBI take out FISA warrants to monitor unusual comms. w/ Russian officials on the part of your campaign staff?",
+        "Are you aware if members of your staff were being monitored by the FBI w/r/t unusual comms. with Russian officials?",
+        "Can you comment on allegations that you or your staff recvd intel re HRC and primary oppos from RIS during campaign?",
+        "Did anyone from your campaign meet with Russian officials in August 2016?",
+        "Can you comment on Michael Flynn's 5 calls to Sergey Kislyak on same day the US ejected Russian officials??",
+        "When Michael Flynn called Russian ambassador Kislyak 5 times on Dec. 29th, what did they talk about?",
+        "Did your campaign make an agreement with Russian gov't to downplay intervention in Ukraine in exchange for their support?",
+        "If you sign ACA repeal, what's your plan to replace it?  Do you have a plan?",
+        "Did your campaign make a deal w/ Russian gov't to lift sactions if you win?  If yes, what form did their support take?",
+        "Why would you chair 'vaccine safety panel' w/ prominent anti-vaxxer RFK Jr.?"
     ],
     app = express(),
     listener = app.listen(process.env.PORT, function () {
@@ -44,7 +54,6 @@ var express = require('express'),
       );
     },
     shouldRespond = function(tweetId, userId, success) {
-      console.log("Should ", userId, "respond to", tweetId,"?")
       database.query("SELECT tweet_id FROM responses WHERE tweet_id = ? AND user_id = ?", [tweetId, userId], function(e, r) {
         if (e) {
           console.log(e);
@@ -54,9 +63,7 @@ var express = require('express'),
         if (!r || r.length === 0 || r[0].tweet_id !== tweetId) {
           console.log("yep");
           respondToTweet(tweetId, userId, success);
-        } else {
-          console.log("narp");
-        }
+        } 
       })
     },
     respondToTweet = function(tweetId, userId, success) {
@@ -80,7 +87,7 @@ var express = require('express'),
           console.log("Trying to tweet: ", accessToken, accessTokenSecret, r);
           twitter.statuses("update",
             {
-              status: _.sample(some_responses),
+              status: prefix + " " + _.sample(some_responses),
               in_reply_to_status_id: tweetId
             },
             accessToken,
@@ -97,7 +104,7 @@ var express = require('express'),
       });
     },
     getUser = function(username, cb) {
-        database.query("SELECT screen_name, active FROM users WHERE screen_name = ?", [username], function(error, results) { 
+        database.query("SELECT screen_name, active, droid_detector FROM users WHERE screen_name = ?", [username], function(error, results) { 
             if (error) { 
                 console.log(error);
                 return;
@@ -111,21 +118,24 @@ var express = require('express'),
                 console.log(error);
                 return;
             }
-            database.query("SELECT id AS user_id FROM users WHERE active IS NOT NULL", [], function(error, users) {
+            database.query("SELECT id AS user_id, droid_detector FROM users WHERE active IS NOT NULL", [], function(error, users) {
                     console.log('users', users);
 		    if (error) {
 			console.log(error);
 			return;
 		    }
 		    _.each(users, function(user) {
-			    data = _.filter(data, function(t) {
-				return t.user.screen_name == process.env.GARBAGE_PERSON && !t.in_reply_to_status_id && t.source.indexOf("android") !== -1;
+			    var dds = _.filter(data, function(t) {
+                                if (user.droid_detector) {
+				    return t.user.screen_name == process.env.GARBAGE_PERSON && !t.in_reply_to_status_id && t.source.indexOf("android") !== -1;
+                                } else { 
+				    return t.user.screen_name == process.env.GARBAGE_PERSON && !t.in_reply_to_status_id;
+                                }
 			    });
 
-			    _.each(data, function(t) {
-				console.log("Checking should respond for:", t.id_str);
+			    _.each(dds, function(t) {
 				shouldRespond(t.id_str, user.user_id, function(d, r) {
-				    console.log("done! from twittar:", d, r);
+				    console.log("done! from twitter:", d, r);
 				});
 			    });
 		     });
@@ -160,6 +170,8 @@ app.use(cookieSession({
   // Cookie Options 
   maxAge: 24 * 60 * 60 * 1000 // 24 hours 
 }));
+
+
 app.post("/switch", function(request, response) {
     if (!request.session.screen_name) {
         response.status(400).json({error: "Scram"});
@@ -180,6 +192,25 @@ app.post("/switch", function(request, response) {
     });
      
 });
+app.post("/switch-droid-detect", function(request, response) {
+    if (!request.session.screen_name) {
+        response.status(400).json({error: "Scram"});
+        return;
+    }
+    getUser(request.session.screen_name, function(user) {
+        database.query(
+             "UPDATE users SET droid_detector = ? WHERE screen_name = ?",
+            [!!user.droid_detector ? null : 1, user.screen_name],
+            function(err, results) {
+                if (err) { 
+                   response.status(500).json({error: "Something broke"});
+                }
+                user.droid_detector = !user.droid_detector
+                response.status(200).json(user);
+            }
+        );
+    });
+});
 app.get("/status", function(request, response) {
     if (!request.session.screen_name) {
         response.status(200).json({error: "Scram"});
@@ -189,6 +220,10 @@ app.get("/status", function(request, response) {
         response.json(user);
     });
 });
+
+app.get("/hot_qs", function(request, response) {
+    response.status(200).json(some_responses);
+})
 
 app.get("/okay", function(request, response) {
   var requestToken              = null,
@@ -216,14 +251,10 @@ app.get("/okay", function(request, response) {
     requestToken       = request.session.requestToken;
     requestTokenSecret = request.session.requestTokenSecret;
 
-    assert.equal(
-      requestToken,
-      oauthToken,
-      (
-        "Well, the requestToken from before really should " +
-        "be the same as the oauthToken from now."
-      )
-    );
+    if (requestToken != oauthToken) {
+        response.redirect('/login');
+        return;
+    }
     
     twitter.getAccessToken(
       oauthToken,
@@ -254,4 +285,4 @@ app.get("/login", function(request, response) {
 setInterval(function() {
   console.log('Waking...');
   go();
-}, 30000)
+}, 10000)
