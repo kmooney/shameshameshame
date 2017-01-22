@@ -23,7 +23,7 @@
             "If you sign ACA repeal, what's your plan to replace it?  Do you have a plan?",
             "Did your campaign make a deal w/ Russian gov't to lift sactions if you win?  If yes, what form did their support take?",
             "Why would you chair 'vaccine safety panel' w/ prominent anti-vaxxer RFK Jr.?",
-            "Why on earth would you like about the number of people who attended the inauguration?"
+            "Why on earth would you lie about the number of people who attended the inauguration?"
         ],
         app = express(),
         listener = app.listen(process.env.PORT, function () {
