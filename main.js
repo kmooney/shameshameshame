@@ -27,7 +27,7 @@
             "So: how about releasing those tax returns?",
             "What's the constitutionality of half your kids running your business and the other half running the white house?",
             "Why build Keystone XL when oil prices are down 75% from their high?  Do you expect oil to become more expensive?",
-            "Why bar people from Iraq, et al. from entering the USA when none have turned out to be terrorists?"
+            "What's the deal with bringing your own cheering section to CIA? Are you insecure?"
         ],
         app = express(),
         listener = app.listen(process.env.PORT, function () {
@@ -147,7 +147,7 @@
                             accessTokenSecret,
                             function(error, data) {
                                 if (error) {
-                                    debug(error);
+                                    debug("Error getting timeline: ", error);
                                     return;
                                 }
                                 database.query("SELECT id AS user_id, droid_detector FROM users WHERE active IS NOT NULL", [], function(error, users) {
