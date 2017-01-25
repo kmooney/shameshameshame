@@ -93,7 +93,6 @@
                     var accessToken = r[0].access_token,
                     accessTokenSecret = r[0].access_token_secret;
 
-                    debug("Trying to tweet: ", accessToken, accessTokenSecret, r);
                     if (!dev_mode) {
                         twitter.statuses(
                             "update",
@@ -166,8 +165,8 @@
                                         });
 
                                         _.each(dds, function(t) {
-                                            shouldRespond(t.id_str, user.user_id, prefix, function(d, r) {
-                                                debug("done! from twitter:", d, r);
+                                            shouldRespond(t.id_str, user.user_id, prefix, function() {
+                                                debug(user.user_id, "responded");
                                             });
                                         });
                                     });
@@ -312,7 +311,6 @@
     });
 
     setInterval(function() {
-        debug('Waking...');
         go();
     }, 2000);
 })();
