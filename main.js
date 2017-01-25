@@ -6,24 +6,28 @@
     "use strict";
     var express = require('express'),
         debug = require('debug')('trump-press-conference'),
+        assert = require('assert'),
         trashcans = process.env.GARBAGE_PEOPLE.split(","),
         dev_mode = process.env.DEVMODE === "true",
         some_responses = [
-            "How much money do you owe alfabank?",
-            "How much money do you owe the Russians?  Can you release your tax returns so the american people can see?",
+            "How much money do you owe the Russians?  Can you release your tax returns so the American people can see?",
             "You said you know things others don't about hacking. What did you know and when did you know it?",
-            "You now claim Russian hacking had no influence on the election. If true, why bring up stolen emails on campaign trail?",
             "Why'd the FBI take out FISA warrants to monitor unusual comms. w/ Russian officials on the part of your campaign staff?",
             "Are you aware if members of your staff were being monitored by the FBI w/r/t unusual comms. with Russian officials?",
             "Can you comment on allegations that you or your staff recvd intel re HRC and primary oppos from RIS during campaign?",
             "Did anyone from your campaign meet with Russian officials in August 2016?",
             "Can you comment on Michael Flynn's 5 calls to Sergey Kislyak on same day the US ejected Russian officials??",
             "When Michael Flynn called Russian ambassador Kislyak 5 times on Dec. 29th, what did they talk about?",
-            "Did your campaign make an agreement with Russian gov't to downplay intervention in Ukraine in exchange for their support?",
-            "If you sign ACA repeal, what's your plan to replace it?  Do you have a plan?",
-            "Did your campaign make a deal w/ Russian gov't to lift sactions if you win?  If yes, what form did their support take?",
+            "What's your plan to replace ACA?  Do you have a plan?",
+            "Did your campaign make a deal w/ Russian gov't to lift sactions if you win?  If so, what form did their support take?",
             "Why would you chair 'vaccine safety panel' w/ prominent anti-vaxxer RFK Jr.?",
-            "Why on earth would you lie about the number of people who attended the inauguration?"
+            "Why on earth would you lie about the number of people who attended the inauguration?",
+            "How do you plan to pay for your wall?",
+            "Is yr issue with the #F35 truly 💰💰 or is it Kremlin opposition to the USA having a 5th gen warfighting platform?",
+            "So: how about releasing those tax returns?",
+            "What's the constitutionality of half your kids running your business and the other half running the white house?",
+            "Why build Keystone XL when oil prices are down 75% from their high?  Do you expect oil to become more expensive?",
+            "Why bar people from Iraq, et al. from entering the USA when none have turned out to be terrorists?"
         ],
         app = express(),
         listener = app.listen(process.env.PORT, function () {
@@ -174,6 +178,13 @@
                 }
             );
         };
+
+    _.each(trashcans, function(garbage_person) {
+        _.each(some_responses, function(message) {
+            var a_tweet = "@"+garbage_person+" "+message;
+            assert(a_tweet.length <= 140, "Whoa whoa whoa tweets can't be more than 140 chars.");
+        });
+    });
 
     database.connect();
 
